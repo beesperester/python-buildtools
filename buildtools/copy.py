@@ -1,9 +1,18 @@
+"""Copy module."""
+
+# system
+import os
+
+# fs
+from fs.copy import copy_fs, copy_file
+
+# buildtools
+from utils.fs_utils import assertFS
+
 class MissingDestinationException(Exception):
     """Missing destination exception."""
 
-_copyItems = []
-
-def copySingle(src, dest):
+def copySingle(srcFS, src, destFS, dest):
     """Copy single source to single destination.
 
     Args:
@@ -14,28 +23,38 @@ def copySingle(src, dest):
         MissingDestinationException
     """
 
-    global _copyItems
-
     if dest is None:
         raise MissingDestinationException()
 
-    _copyItems.append((src, dest))
+    if srcFS.isdir(unicode(src)):
+        assertFS(destFS.getsyspath(unicode(dest)))
 
-def copyMultiple(data):
+        copy_fs(srcFS.opendir(unicode(src)), destFS.opendir(unicode(dest)))
+
+    if srcFS.isfile(unicode(src)):
+        assertFS(destFS.getsyspath(unicode(os.path.dirname(dest))))
+
+        copy_file(srcFS, unicode(src), destFS, unicode(dest))    
+
+def copyMultiple(srcFS, data, destFS):
     """Copy multiple sources to multiple destinations.
 
     Args:
         data (dict)
     """
 
-    global _copyItems
-
     for src, dest in data.iteritems():
-        _copyItems.append((src, dest))
+        copySingle(srcFS, src, destFS, dest)
 
 def copySrc(src, dest=None):
     if isinstance(src, basestring):
-        return copySingle(src, dest)
+        def copySingleWrapper(srcFS, destFS):
+            copySingle(srcFS, src, destFS, dest)
+
+        return copySingleWrapper
 
     if isinstance(src, dict):
-        return copyMultiple(src)
+        def copyMultipleWrapper(srcFS, destFS):
+            copyMultiple(srcFS, src, destFS)
+
+        return copyMultipleWrapper

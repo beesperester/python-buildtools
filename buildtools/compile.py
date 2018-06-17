@@ -1,9 +1,31 @@
+"""Compile module."""
+
+# system
+import os
+import py_compile
+
+# fs
+from fs.copy import copy_fs, copy_file
+
+# buildtools
+from utils.fs_utils import assertFS
+
 class MissingDestinationException(Exception):
     """Missing destination exception."""
 
-_compileItems = []
+def compileFile(src, dest):
+    """Compile src file to dest file.
 
-def compileSingle(src, dest):
+    Args:
+        src (basestring)
+        dest (basestring)
+    """
+
+    assertFS(os.path.dirname(dest))
+
+    py_compile.compile(src, dest)
+
+def compileSingle(srcFS, src, destFS, dest):
     """Copy single source to single destination.
 
     Args:
@@ -14,28 +36,43 @@ def compileSingle(src, dest):
         MissingDestinationException
     """
 
-    global _compileItems
-
     if dest is None:
         raise MissingDestinationException()
 
-    _compileItems.append((src, dest))
+    if srcFS.exists(unicode(src)):
+        if srcFS.isdir(unicode(src)):
+            srcModuleFS = srcFS.opendir(unicode(src))
+            destModuleFS = assertFS(destFS.getsyspath(unicode(dest)))
 
-def compileMultiple(data):
+            for path in srcModuleFS.walk.files(filter=['*.py']):
+                filename, extension = os.path.splitext(path)
+
+                compiledPath = filename + ".pyc"
+
+                compileFile(srcModuleFS.getsyspath(unicode(path)), destModuleFS.getsyspath(unicode(compiledPath)))
+
+        if srcFS.isfile(unicode(src)):
+            compileFile(srcFS.getsyspath(unicode(src)), destFS.getsyspath(unicode(dest)))
+
+def compileMultiple(srcFS, data, destFS):
     """Copy multiple sources to multiple destinations.
 
     Args:
         data (dict)
     """
 
-    global _compileItems
-
     for src, dest in data.iteritems():
-        _compileItems.append((src, dest))
+        compileSingle(srcFS, src, destFS, dest)
 
 def compileSrc(src, dest=None):
     if isinstance(src, basestring):
-        return compileSingle(src, dest)
+        def compileSingleWrapper(srcFS, destFS):
+            compileSingle(srcFS, src, destFS, dest)
+
+        return compileSingleWrapper
 
     if isinstance(src, dict):
-        return compileMultiple(src)
+        def compileMultipleWrapper(srcFS, destFS):
+            compileMultiple(srcFS, src, destFS)
+
+        return compileMultipleWrapper
