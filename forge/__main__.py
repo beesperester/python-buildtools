@@ -12,14 +12,14 @@ def main(arguments):
         # my packages
         sys.path.append(cwdFS.getsyspath(unicode(".")))
 
-        build = importlib.import_module("build")
+        forge = importlib.import_module("forge")
 
-        if hasattr(build, "config"):
-            config = getattr(build, "config")
+        if hasattr(forge, "config"):
+            config = getattr(forge, "config")
 
             for argument in arguments:
-                if hasattr(build, argument):
-                    method = getattr(build, argument)
+                if hasattr(forge, argument):
+                    method = getattr(forge, argument)
 
                     method(config)()
 
