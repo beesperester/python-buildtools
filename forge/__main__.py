@@ -27,4 +27,5 @@ def main(arguments):
         raise e
 
 if __name__ == '__main__':
-    main(sys.argv)
+    # main(sys.argv)
+    print "hello world"
