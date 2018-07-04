@@ -8,7 +8,7 @@ import py_compile
 from fs.copy import copy_fs, copy_file
 
 # buildtools
-from utils.fs_utils import assertFS
+from forge.utils.fs_utils import assertFS
 
 class MissingDestinationException(Exception):
     """Missing destination exception."""

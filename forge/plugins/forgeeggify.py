@@ -8,8 +8,7 @@ import py_compile
 from fs.copy import copy_fs, copy_file
 
 # buildtools
-from utils.fs_utils import assertFS
-from stack import stack
+from forge.utils.fs_utils import assertFS
 
 def eggify(src, dest=None):
     pass

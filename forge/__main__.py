@@ -1,3 +1,5 @@
+""" Main module. """
+
 # system
 import sys
 import importlib
@@ -12,14 +14,14 @@ def main(arguments):
         # my packages
         sys.path.append(cwdFS.getsyspath(unicode(".")))
 
-        forge = importlib.import_module("forge")
+        forgeconfig = importlib.import_module("forgeconfig")
 
-        if hasattr(forge, "config"):
-            config = getattr(forge, "config")
+        if hasattr(forgeconfig, "config"):
+            config = getattr(forgeconfig, "config")
 
             for argument in arguments:
-                if hasattr(forge, argument):
-                    method = getattr(forge, argument)
+                if hasattr(forgeconfig, argument):
+                    method = getattr(forgeconfig, argument)
 
                     method(config)()
 
@@ -27,5 +29,4 @@ def main(arguments):
         raise e
 
 if __name__ == '__main__':
-    # main(sys.argv)
-    print "hello world"
+    main(sys.argv)
