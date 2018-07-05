@@ -7,6 +7,8 @@ import re
 
 # fs
 from fs.osfs import OSFS
+from fs.zipfs import ZipFS
+from fs.tempfs import TempFS
 from fs.copy import copy_fs, copy_file
 
 # buildtools
@@ -42,7 +44,7 @@ def removeOldEggs(fs, name):
             if destNameStripped == nameStripped:
                 fs.remove(unicode(destName))
 
-def eggifySingle(srcFS, src, destFS, dest):
+def eggifySingle(srcFS, src, destFS, dest, config=None):
     """ Eggify single source to single destination.
 
     Args:
@@ -55,6 +57,9 @@ def eggifySingle(srcFS, src, destFS, dest):
 
     if dest is None:
         raise MissingDestinationException()
+
+    if config is None:
+        config = {}
 
     if src.startswith("/"):
         head, tail = os.path.split(src)
@@ -80,13 +85,29 @@ def eggifySingle(srcFS, src, destFS, dest):
                     # remove existing eggs
                     removeOldEggs(destEggFS, name)
 
-                    print "copy {} to {}".format(distFS.getsyspath(unicode(name)), destEggFS.getsyspath(unicode(name)))
+                    eggSrcPath = distFS.getsyspath(unicode(name))
+                    eggDestPath = destEggFS.getsyspath(unicode(name))
 
-                    copy_file(distFS, unicode(name), destEggFS, unicode(name))
+                    # create new temp filesystem
+                    tempFS = TempFS()
+                    eggFS = ZipFS(eggSrcPath)
+
+                    # copy egg contents to temp filesystem
+                    copy_fs(eggFS, tempFS)
+
+                    # purge source files
+                    if "purge" in config.keys() and config["purge"]:                        
+                        for path in tempFS.walk.files(filter=["*.py"]):
+                            tempFS.remove(path)
+
+                    with ZipFS(eggDestPath, write=True) as destEggZipFS:
+                        copy_fs(tempFS, destEggZipFS)
+
+                    print "copied {} to {}".format(eggSrcPath, eggDestPath)
 
                     break
 
-def eggifyMultiple(srcFS, data, destFS):
+def eggifyMultiple(srcFS, data, destFS, config=None):
     """ Eggify multiple sources to multiple destinations.
 
     Args:
@@ -94,17 +115,22 @@ def eggifyMultiple(srcFS, data, destFS):
     """
 
     for src, dest in data.iteritems():
-        eggifySingle(srcFS, src, destFS, dest)
+        eggifySingle(srcFS, src, destFS, dest, config)
 
-def eggifySrc(src, dest=None):
+def eggifySrc(src, dest=None, **kwargs):
+    config = None
+
+    if "config" in kwargs.keys():
+        config = kwargs["config"]
+
     if isinstance(src, basestring):
         def eggifySingleWrapper(srcFS, destFS):
-            eggifySingle(srcFS, src, destFS, dest)
+            eggifySingle(srcFS, src, destFS, dest, config)
 
         return eggifySingleWrapper
 
     if isinstance(src, dict):
         def eggifyMultipleWrapper(srcFS, destFS):
-            eggifyMultiple(srcFS, src, destFS)
+            eggifyMultiple(srcFS, src, destFS, config)
 
         return eggifyMultipleWrapper
