@@ -35,7 +35,6 @@ def eggifySingle(srcFS, src, destFS, dest):
         src = tail
 
     if srcFS.isfile(unicode(src)):
-        emptyFS(destFS, dest)
         assertFS(destFS.getsyspath(unicode(dest)))
 
         workingDir = srcFS.getsyspath(unicode("/"))
