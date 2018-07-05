@@ -43,10 +43,14 @@ config = {
 
 Cd into your project directory and run forge like this:
 
-`python -m forge build`
+```
+python -m forge build
+```
 
 to build your project or
 
-`python -m forge watch`
+```
+python -m forge watch
+```
 
 to rebuild on file change
