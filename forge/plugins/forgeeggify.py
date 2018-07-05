@@ -73,7 +73,12 @@ def eggifySingle(srcFS, src, destFS, dest, config=None):
         workingDir = srcFS.getsyspath(unicode("/"))
         devnull = open(os.devnull, 'w')
 
-        subprocess.check_call(["python", src, "bdist_egg"], cwd=workingDir, stdout=devnull, stderr=devnull)
+        cmd = ["python", src, "bdist_egg"]
+
+        if "purge" in config.keys() and config["purge"]:
+            cmd.append("--exclude-source-files")            
+
+        subprocess.check_call(cmd, cwd=workingDir, stdout=devnull, stderr=devnull)
     
         if srcFS.isdir(unicode("dist")):
             distFS = srcFS.opendir(unicode("dist"))
@@ -88,20 +93,7 @@ def eggifySingle(srcFS, src, destFS, dest, config=None):
                     eggSrcPath = distFS.getsyspath(unicode(name))
                     eggDestPath = destEggFS.getsyspath(unicode(name))
 
-                    # create new temp filesystem
-                    tempFS = TempFS()
-                    eggFS = ZipFS(eggSrcPath)
-
-                    # copy egg contents to temp filesystem
-                    copy_fs(eggFS, tempFS)
-
-                    # purge source files
-                    if "purge" in config.keys() and config["purge"]:                        
-                        for path in tempFS.walk.files(filter=["*.py"]):
-                            tempFS.remove(path)
-
-                    with ZipFS(eggDestPath, write=True) as destEggZipFS:
-                        copy_fs(tempFS, destEggZipFS)
+                    copy_file(distFS, unicode(name), destEggFS, unicode(name))
 
                     print "copied {} to {}".format(eggSrcPath, eggDestPath)
 
