@@ -32,3 +32,14 @@ def assertFS(path, remainder=None):
         fs = fs.opendir(unicode(remainder))
 
     return fs
+
+def emptyFS(fs, path):
+    """ Empty path in filesystem.
+
+    Args:
+        fs (fs)
+        path (string)
+    """
+
+    if fs.isdir(unicode(path)):
+        fs.removetree(unicode(path))
