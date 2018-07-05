@@ -1,6 +1,6 @@
 # python-buildtools
 
-A set of wepback or gulp-like buildtools.
+A set of wepback or gulp-like buildtools for python. It comes with plugins for copying, compiling and watching files, as well as creating .egg-files.
 
 Create a forgeconfig.py file in you project.
 
