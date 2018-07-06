@@ -1,6 +1,7 @@
 """Watch module."""
 
 # system
+import re
 import time
 
 # watchdog
@@ -9,23 +10,42 @@ from watchdog.events import FileSystemEventHandler
 
 class WatchHandler(FileSystemEventHandler):
 
-    def __init__(self, callbacks):
+    def __init__(self, callbacks, filterExpressions):
         self.callbacks = callbacks
+        self.filterExpressions = filterExpressions
 
         super(WatchHandler, self).__init__()
 
     def on_modified(self, event):
-        print "on_modified", event
+        trigger = False
 
-        for callback in self.callbacks:
-            callback()
+        for filterExpression in self.filterExpressions:
+            pattern = re.compile(filterExpression)
+            
+            if pattern.match(event.src_path):
+                trigger = True
 
-def watchSrc(src, callbacks=None):
+                break
+
+        if trigger:
+            print "{} triggered on_modified event".format(event.src_path)
+            for callback in self.callbacks:
+                callback()
+
+def watchSrc(src, callbacks=None, **kwargs):
     if callbacks is None:
         callbacks = []
 
+    filterExpressions = []
+
+    if "filter" in kwargs.keys():
+        filterExpressions = kwargs["filter"]
+
+        if not isinstance(filterExpressions, list):
+            filterExpressions = [filterExpressions]
+
     def watchWrapper():
-        event_handler = WatchHandler(callbacks)
+        event_handler = WatchHandler(callbacks, filterExpressions)
         observer = Observer()
         observer.schedule(event_handler, path=src, recursive=True)
         observer.start()
