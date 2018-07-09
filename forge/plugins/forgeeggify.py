@@ -61,7 +61,7 @@ def eggifySingle(srcFS, src, destFS, dest, config=None):
     if config is None:
         config = {}
 
-    if src.startswith("/"):
+    if src.startswith("/") or src[1] == ":":
         head, tail = os.path.split(src)
 
         srcFS = OSFS(head)
